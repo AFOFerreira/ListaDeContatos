@@ -3,14 +3,15 @@ package com.everis.listadecontatos.helpers
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.everis.listadecontatos.feature.listacontatos.model.ContatosVO
 
 class HelperDB(
-    context: Context?
+    context: Context
 
 ) : SQLiteOpenHelper(context, NOME_BANCO, null, VERSAO_ATUAL) {
     companion object {
         private val NOME_BANCO = "ContatoDB"
-        private val VERSAO_ATUAL = 1
+        private val VERSAO_ATUAL = 2
     }
 
     val TABLE_NAME = "contato"
@@ -18,10 +19,10 @@ class HelperDB(
     val COLUNM_NOME = "nome"
     val COLUNM_TELEFONE = "TELEFONE"
     val DROP_TABLE = "DROP TABLE IF EXISTS $TABLE_NAME"
-    val CREATE_TABLE = "CREATE TABLE $TABLE_NAME ("+
-            "$COLUNM_ID INTEGER NOT NULL" +
-            "$COLUNM_NOME TEXT NOT NULL" +
-            "$COLUNM_TELEFONE TEXT NOT NULL" +
+    val CREATE_TABLE = "CREATE TABLE $TABLE_NAME (" +
+            " $COLUNM_ID INTEGER NOT NULL," +
+            " $COLUNM_NOME TEXT NOT NULL," +
+            " $COLUNM_TELEFONE TEXT NOT NULL," +
             "PRIMARY KEY($COLUNM_ID AUTOINCREMENT)" +
             ")"
 
@@ -39,5 +40,26 @@ class HelperDB(
             onCreate(db)
         }
         TODO("Not yet implemented")
+    }
+
+    fun buscarContatos(busca: String): List<ContatosVO> {
+        val db = readableDatabase ?: return mutableListOf()
+        var lista = mutableListOf<ContatosVO>()
+        val sql = "Select * from $TABLE_NAME"
+        var cursor = db.rawQuery(sql, arrayOf()) ?: return mutableListOf()
+        while (cursor.moveToNext()) {
+            var contato = ContatosVO(
+                cursor.getInt(cursor.getColumnIndex(COLUNM_ID)),
+                cursor.getString(cursor.getColumnIndex(COLUNM_NOME)),
+                cursor.getString(cursor.getColumnIndex(COLUNM_TELEFONE))
+            )
+            lista.add(contato)
+        }
+        return lista
+    }
+
+    fun salvarContato(contato: ContatosVO){
+        val db = writableDatabase ?: return
+        val sql = "INSERT INTO $TABLE_NAME()"
     }
 }
