@@ -1,5 +1,6 @@
 package com.everis.listadecontatos.helpers
 
+import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -42,11 +43,26 @@ class HelperDB(
         TODO("Not yet implemented")
     }
 
-    fun buscarContatos(busca: String): List<ContatosVO> {
+    fun buscarContatos(busca: String, isBuscaPorId: Boolean = false): List<ContatosVO> {
+    //salvarContato(ContatosVO(0, "teste2", "1234"))
         val db = readableDatabase ?: return mutableListOf()
+        var where: String? = null
+        var args: Array<String> = arrayOf()
+        if(isBuscaPorId){
+            where = "$COLUNM_ID = ?"
+           args = arrayOf("$busca")
+        }
+        else{
+            where = "$COLUNM_NOME LIKE ?"
+            args = arrayOf("%$busca%")
+        }
         var lista = mutableListOf<ContatosVO>()
-        val sql = "Select * from $TABLE_NAME"
-        var cursor = db.rawQuery(sql, arrayOf()) ?: return mutableListOf()
+
+        var cursor = db.query(TABLE_NAME,null,where,args, null,null, null)
+        if(cursor == null){
+            db.close()
+            return mutableListOf()
+        }
         while (cursor.moveToNext()) {
             var contato = ContatosVO(
                 cursor.getInt(cursor.getColumnIndex(COLUNM_ID)),
@@ -59,7 +75,57 @@ class HelperDB(
     }
 
     fun salvarContato(contato: ContatosVO){
+        /*Primeira maneira
         val db = writableDatabase ?: return
-        val sql = "INSERT INTO $TABLE_NAME()"
+        val sql = "INSERT INTO $TABLE_NAME ($COLUNM_NOME, $COLUNM_TELEFONE) VALUES ('Abner', '1234')"
+        db.execSQL(sql)
+        db.close()*/
+
+        //Segunda maneira
+        val db = writableDatabase ?: return
+        val sql = "INSERT INTO $TABLE_NAME ($COLUNM_NOME, $COLUNM_TELEFONE) VALUES (?,?)"
+        var array = arrayOf(contato.nome, contato.telefone)
+        db.execSQL(sql, array)
+        db.close()
+
+
+        /*Terceira maneira
+        val db = writableDatabase ?: return
+        var content = ContentValues()
+        content.put(COLUNM_NOME, contato.nome)
+        content.put(COLUNM_TELEFONE, contato.telefone)
+        db.insert(TABLE_NAME, null, content)
+        db.close()
+        */
+
+    }
+
+    fun deletarContato(id:Int){
+        /*Primeira maneira
+        val db = writableDatabase ?: return
+        val where = "id = ?"
+        var arg = arrayOf("$id")
+        db.delete(TABLE_NAME,where, arg)
+        db.close()
+        * */
+
+        //Segunda maneira
+        val db = writableDatabase ?: return
+        val sql = "DELETE FROM $TABLE_NAME WHERE $COLUNM_ID = ?"
+        val arg = arrayOf("$id")
+        db.execSQL(sql, arg)
+        db.close()
+
+    }
+
+    fun updateContato(contato : ContatosVO){
+        val db = writableDatabase ?: return
+        val content = ContentValues()
+        content.put(COLUNM_NOME, contato.nome)
+        content.put(COLUNM_TELEFONE, contato.telefone)
+        val where = "id = ?"
+        var args = arrayOf("${contato.id}")
+        db.update(TABLE_NAME,content, where, args)
+        db.close()
     }
 }
